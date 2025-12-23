@@ -284,3 +284,56 @@ class TestConfig:
         assert backbone[4].num_features == backbone[3].out_channels
         assert backbone[4].num_features == backbone[5].in_channels
         assert backbone[6].out_channels == backbone[7].num_features
+
+    def test_parse_param_name_with_parentheses(self):
+        from excore.config.parse import _parse_param_name
+
+        base_name, hooks = _parse_param_name("Module.scale(0.25)")
+        assert base_name == "Module"
+        assert len(hooks) == 1
+        assert hooks[0] == (".", "scale(0.25)")
+
+        base_name, hooks = _parse_param_name("Module.offset_default_angles().reorder()")
+        assert base_name == "Module"
+        assert len(hooks) == 1
+        assert hooks[0] == (".", "offset_default_angles().reorder()")
+
+        base_name, hooks = _parse_param_name("Module.offset(1).scale(0.02).clip(0, 1)")
+        assert base_name == "Module"
+        assert len(hooks) == 1
+        assert hooks[0] == (".", "offset(1).scale(0.02).clip(0, 1)")
+
+        base_name, hooks = _parse_param_name("Module.scale([1, 1, 1])")
+        assert base_name == "Module"
+        assert len(hooks) == 1
+        assert hooks[0] == (".", "scale([1, 1, 1])")
+
+        base_name, hooks = _parse_param_name("Module")
+        assert base_name == "Module"
+        assert len(hooks) == 0
+
+        base_name, hooks = _parse_param_name("Module.attr1.attr2")
+        assert base_name == "Module"
+        assert len(hooks) == 2
+        assert hooks[0] == (".", "attr1")
+        assert hooks[1] == (".", "attr2")
+
+        base_name, hooks = _parse_param_name("Module.func(outer(inner(1, 2), 3))")
+        assert base_name == "Module"
+        assert len(hooks) == 1
+        assert hooks[0] == (".", "func(outer(inner(1, 2), 3))")
+
+        base_name, hooks = _parse_param_name("Module.clip(0, 1)")
+        assert base_name == "Module"
+        assert len(hooks) == 1
+        assert hooks[0] == (".", "clip(0, 1)")
+
+        base_name, hooks = _parse_param_name("Module.method(1.5, 2.3, 3.7)")
+        assert base_name == "Module"
+        assert len(hooks) == 1
+        assert hooks[0] == (".", "method(1.5, 2.3, 3.7)")
+
+        base_name, hooks = _parse_param_name("Module.method()")
+        assert base_name == "Module"
+        assert len(hooks) == 1
+        assert hooks[0] == (".", "method()")

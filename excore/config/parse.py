@@ -35,8 +35,30 @@ def _dict2node(module_type: SpecialFlag, base: str, _dict: dict) -> dict[str, Mo
 
 
 def _parse_param_name(name: str) -> tuple[str, list[tuple[str, str]]]:
-    names = re.split(rf"([{''.join(HOOK_FLAGS)}])", name)
-    return names.pop(0), list(zip(names[::2], names[1::2]))
+    matches = [
+        (m.start(), m.group())
+        for m in re.finditer(rf"[{''.join(HOOK_FLAGS)}]", name)
+        if name[: m.start()].count("(") == name[: m.start()].count(")")
+        and (m.start() == 0 or name[m.start() - 1] != ")")
+    ]
+    return (
+        (name, [])
+        if not matches
+        else (
+            name[: matches[0][0]],
+            [
+                (
+                    m[1],
+                    (
+                        name[m[0] + 1 : matches[i + 1][0]]
+                        if i + 1 < len(matches)
+                        else name[m[0] + 1 :]
+                    ),
+                )
+                for i, m in enumerate(matches)
+            ],
+        )
+    )
 
 
 def _flatten_list(
