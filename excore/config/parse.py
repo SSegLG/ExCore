@@ -39,7 +39,7 @@ def _parse_param_name(name: str) -> tuple[str, list[tuple[str, str]]]:
         (m.start(), m.group())
         for m in re.finditer(rf"[{''.join(HOOK_FLAGS)}]", name)
         if name[: m.start()].count("(") == name[: m.start()].count(")")
-        and (m.start() == 0 or name[m.start() - 1] != ")")
+        and (m.start() == 0 or m.group() != "." or name[m.start() - 1] != ")")
     ]
     return (
         (name, [])
